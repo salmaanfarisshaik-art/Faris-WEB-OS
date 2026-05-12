@@ -6,6 +6,7 @@ import FileManager from '../apps/FileManager'
 import Editor from '../apps/Editor'
 import Settings from '../apps/Settings'
 import SystemMonitor from '../apps/SystemMonitor'
+import Browser from '../apps/Browser'
 
 const appMeta: Record<string, { emoji: string; color: string; label: string }> = {
   terminal: { emoji: '⌨️', color: '#00ff88', label: 'Terminal' },
@@ -14,6 +15,7 @@ const appMeta: Record<string, { emoji: string; color: string; label: string }> =
   scanner:  { emoji: '🛡️', color: '#06b6d4', label: 'Network Scanner' },
   settings: { emoji: '⚙️', color: '#f59e0b', label: 'Settings' },
   monitor: { emoji: '📊', color: '#06b6d4', label: 'System Monitor' },
+  browser: { emoji: '🌐', color: '#06b6d4', label: 'Browser' },
 }
 
 export default function Window({ window: win }: { window: WindowState }) {
@@ -174,6 +176,7 @@ function AppContent({ app, meta, winId, onClose }: {
   if (app === 'editor') return <Editor />
   if (app === 'settings') return <Settings />
   if (app === 'monitor') return <SystemMonitor />
+  if (app === 'browser') return <Browser />
 
   const descriptions: Record<string, string> = {
     files:    'Browse, edit and manage your container filesystem',

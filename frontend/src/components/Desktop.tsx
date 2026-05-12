@@ -4,9 +4,10 @@ const icons = [
   { id: 'terminal', label: 'Terminal', emoji: '⌨️', color: '#00ff88', glow: 'rgba(0,255,136,0.3)' },
   { id: 'files',    label: 'Files',    emoji: '📂', color: '#3b82f6', glow: 'rgba(59,130,246,0.3)' },
   { id: 'editor',   label: 'Editor',   emoji: '⚡', color: '#8b5cf6', glow: 'rgba(139,92,246,0.3)' },
-  { id: 'scanner',  label: 'Scanner',  emoji: '🛡️', color: '#06b6d4', glow: 'rgba(6,182,212,0.3)' },
+  { id: 'browser',  label: 'Browser',  emoji: '🌐', color: '#06b6d4', glow: 'rgba(6,182,212,0.3)' },
+  { id: 'scanner',  label: 'Scanner',  emoji: '🛡️', color: '#ef4444', glow: 'rgba(239,68,68,0.3)' },
+  { id: 'monitor',  label: 'Monitor',  emoji: '📊', color: '#06b6d4', glow: 'rgba(6,182,212,0.3)' },
   { id: 'settings', label: 'Settings', emoji: '⚙️', color: '#f59e0b', glow: 'rgba(245,158,11,0.3)' },
-  { id: 'monitor', label: 'Monitor', emoji: '📊', color: '#06b6d4', glow: 'rgba(6,182,212,0.3)' },
 ]
 
 export default function Desktop() {
