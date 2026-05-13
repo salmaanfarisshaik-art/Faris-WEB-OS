@@ -5,12 +5,18 @@ import { spawn } from 'child_process'
 import cors from 'cors'
 import * as fs from 'fs'
 import * as path from 'path'
+import dotenv from 'dotenv'
+dotenv.config()
+import { initDB } from './db'
+import { connectRedis } from './redisClient'
+import authRoutes from './authRoutes'
 
 const app = express()
 const httpServer = createServer(app)
 
 app.use(cors({ origin: 'http://localhost:5173' }))
 app.use(express.json())
+app.use('/api/auth', authRoutes)
 
 const io = new Server(httpServer, {
   cors: { origin: 'http://localhost:5173', methods: ['GET', 'POST'] }
@@ -230,6 +236,8 @@ app.get('/api/browser/fetch', async (req, res) => {
 })
 // ─── START ────────────────────────────────────────────────
 
-httpServer.listen(3001, () => {
+httpServer.listen(3001, async () => {
+  await connectRedis()
+  await initDB()
   console.log('✅ Beast OS Backend running on http://localhost:3001')
 })
