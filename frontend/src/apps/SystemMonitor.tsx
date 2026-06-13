@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 
-const API = 'http://localhost:3001'
+const API = ''
 
 interface SystemStats {
   cpu: {

@@ -5,26 +5,38 @@ import { spawn } from 'child_process'
 import cors from 'cors'
 import * as fs from 'fs'
 import * as path from 'path'
+import * as os from 'os'
+import fetch from 'node-fetch'
 import dotenv from 'dotenv'
 dotenv.config()
+
 import { initDB } from './db'
-import { connectRedis } from './redisClient'
+import { connectRedis, redisClient } from './redisClient'
 import authRoutes from './authRoutes'
 
 const app = express()
 const httpServer = createServer(app)
 
-app.use(cors({ origin: 'http://localhost:5173' }))
+app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }))
 app.use(express.json())
-app.use('/api/auth', authRoutes)
 
 const io = new Server(httpServer, {
-  cors: { origin: 'http://localhost:5173', methods: ['GET', 'POST'] }
+  cors: {
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    methods: ['GET', 'POST']
+  }
 })
 
-const ROOT_DIR = `C:\\Users\\Shaik.salmaan`
+// ─── AUTH ROUTES ─────────────────────────────────────────
+app.use('/api/auth', authRoutes)
+
+// ─── HEALTH ──────────────────────────────────────────────
+app.get('/health', (req, res) => {
+  res.json({ status: 'Beast OS Backend Running 🔥' })
+})
 
 // ─── FILE ROUTES ─────────────────────────────────────────
+const ROOT_DIR = `C:\\Users\\Shaik.salmaan`
 
 app.get('/api/files/list', (req, res) => {
   const dirPath = (req.query.path as string) || ROOT_DIR
@@ -98,6 +110,7 @@ app.post('/api/files/rename', (req, res) => {
     res.json({ success: false, error: 'Cannot rename' })
   }
 })
+
 app.post('/api/files/write', (req, res) => {
   const { path: filePath, content } = req.body
   try {
@@ -108,62 +121,13 @@ app.post('/api/files/write', (req, res) => {
   }
 })
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'Beast OS Backend Running 🔥' })
-})
-
-// ─── TERMINAL ────────────────────────────────────────────
-
-io.on('connection', (socket) => {
-  console.log('Terminal connected:', socket.id)
-
-  const shell = spawn('powershell.exe', ['-NoLogo'], {
-    env: process.env as { [key: string]: string },
-    cwd: ROOT_DIR,
-    windowsHide: false,
-  })
-
-  shell.stdout.on('data', (data) => {
-    socket.emit('terminal:output', data.toString())
-  })
-
-  shell.stderr.on('data', (data) => {
-    socket.emit('terminal:output', data.toString())
-  })
-
-  socket.on('terminal:input', (data: string) => {
-    if (data === '\r') {
-      shell.stdin.write('\r\n')
-    } else if (data === '\x7f') {
-      shell.stdin.write('\b')
-    } else {
-      shell.stdin.write(data)
-    }
-  })
-
-  shell.on('close', () => {
-    socket.emit('terminal:output', `\r\n\x1b[1;31m[Session ended]\x1b[0m\r\n`)
-  })
-
-  shell.on('error', (err) => {
-    socket.emit('terminal:output', `\r\n\x1b[1;31m[Error: ${err.message}]\x1b[0m\r\n`)
-  })
-
-  socket.on('disconnect', () => {
-    console.log('Disconnected:', socket.id)
-    shell.kill()
-  })
-})
-import * as os from 'os'
-
-// System stats route
+// ─── SYSTEM STATS ────────────────────────────────────────
 app.get('/api/system/stats', (req, res) => {
   const cpus = os.cpus()
   const totalMem = os.totalmem()
   const freeMem = os.freemem()
   const usedMem = totalMem - freeMem
 
-  // Calculate CPU usage per core
   const cpuInfo = cpus.map((cpu, i) => {
     const total = Object.values(cpu.times).reduce((a, b) => a + b, 0)
     const idle = cpu.times.idle
@@ -192,14 +156,11 @@ app.get('/api/system/stats', (req, res) => {
       hostname: os.hostname(),
       uptime: os.uptime(),
       type: os.type(),
-    },
-    network: os.networkInterfaces()
+    }
   })
 })
 
-import fetch from 'node-fetch'
-
-// Browser proxy route
+// ─── BROWSER PROXY ───────────────────────────────────────
 app.get('/api/browser/fetch', async (req, res) => {
   const url = req.query.url as string
   if (!url) return res.json({ success: false, error: 'No URL provided' })
@@ -216,26 +177,112 @@ app.get('/api/browser/fetch', async (req, res) => {
 
     let html = await response.text()
     const finalUrl = response.url
-    const baseUrl = new URL(finalUrl).origin
 
-    // Inject base tag so relative URLs work
     html = html.replace(
       '<head>',
       `<head><base href="${finalUrl}"><style>::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:#333;border-radius:3px}</style>`
     )
 
-    // Remove X-Frame headers by serving ourselves
     res.setHeader('Content-Type', 'text/html')
-    res.setHeader('X-Frame-Options', 'SAMEORIGIN')
     res.setHeader('Access-Control-Allow-Origin', '*')
     res.send(html)
-
   } catch (err: any) {
     res.json({ success: false, error: err.message })
   }
 })
-// ─── START ────────────────────────────────────────────────
 
+// ─── WEBSOCKET ───────────────────────────────────────────
+io.on('connection', (socket) => {
+  console.log('Socket connected:', socket.id)
+
+  // ── Terminal ──
+  const shell = spawn('powershell.exe', ['-NoLogo'], {
+    env: process.env as { [key: string]: string },
+    cwd: ROOT_DIR,
+    windowsHide: false,
+  })
+
+  shell.stdout.on('data', (data) => {
+    socket.emit('terminal:output', data.toString())
+  })
+
+  shell.stderr.on('data', (data) => {
+    socket.emit('terminal:output', data.toString())
+  })
+
+  socket.on('terminal:input', (data: string) => {
+    if (data === '\r') {
+      shell.stdin.write('\r\n')
+    } else if (data === '\x7f') {
+      shell.stdin.write('\b')
+    } else {
+      shell.stdin.write(data)
+    }
+  })
+
+  shell.on('close', () => {
+    socket.emit('terminal:output', `\r\n\x1b[1;31m[Session ended]\x1b[0m\r\n`)
+  })
+
+  // ── OS State Sync ──
+  socket.on('os:join', async () => {
+    try {
+      const token = (socket.handshake.auth as any).token
+      if (!token) return
+
+      const session = await redisClient.get(`session:${token}`)
+      if (!session) return
+
+      const parsed = JSON.parse(session as string)
+      const userId = parsed.userId
+      const room = `os:${userId}`
+
+      socket.join(room)
+      console.log(`User ${userId} joined OS room`)
+
+      // Send saved state to this device
+      const state = await redisClient.get(`os_state:${userId}`)
+      if (state) {
+        socket.emit('os:state', JSON.parse(state as string))
+      }
+    } catch (err) {
+      console.error('os:join error:', err)
+    }
+  })
+
+  socket.on('os:action', async (data: { action: string; payload: any }) => {
+    try {
+      const token = (socket.handshake.auth as any).token
+      if (!token) return
+
+      const session = await redisClient.get(`session:${token}`)
+      if (!session) return
+
+      const parsed = JSON.parse(session as string)
+      const userId = parsed.userId
+      const room = `os:${userId}`
+
+      // Save to Redis
+      await redisClient.setEx(
+        `os_state:${userId}`,
+        86400,
+        JSON.stringify(data.payload)
+      )
+
+      // Broadcast to other devices
+      socket.to(room).emit('os:state', data.payload)
+    } catch (err) {
+      console.error('os:action error:', err)
+    }
+  })
+
+  socket.on('disconnect', () => {
+    console.log('Socket disconnected:', socket.id)
+    shell.kill()
+  })
+})
+
+// ─── START ────────────────────────────────────────────────
 httpServer.listen(3001, async () => {
   await connectRedis()
   await initDB()

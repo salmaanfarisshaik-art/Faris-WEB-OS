@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import MonacoEditor from '@monaco-editor/react'
 
-const API = 'http://localhost:3001'
+const API = ''
 
 function detectLanguage(filename: string): string {
   const ext = filename.split('.').pop()?.toLowerCase()

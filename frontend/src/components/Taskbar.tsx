@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useOSStore } from '../store/osStore'
+import { useAuthStore } from '../store/authStore'
 
 const appMeta: Record<string, { emoji: string; color: string }> = {
   terminal: { emoji: '⌨️', color: '#00ff88' },
@@ -11,6 +12,7 @@ const appMeta: Record<string, { emoji: string; color: string }> = {
 
 export default function Taskbar() {
   const { windows, minimizeWindow, openWindow } = useOSStore()
+  const { user, logout } = useAuthStore()
   const [time, setTime] = useState('')
   const [date, setDate] = useState('')
 
@@ -118,37 +120,90 @@ export default function Taskbar() {
       <div style={{ width: '1px', height: '28px', background: 'var(--border-bright)' }} />
 
       {/* System Tray */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-        {['🤖', '🌐', '🔔'].map(icon => (
-          <div
-            key={icon}
-            style={{
-              width: '32px', height: '32px',
-              borderRadius: '8px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center',
-              justifyContent: 'center', fontSize: '15px',
-              transition: 'background 0.15s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-glass-hover)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-          >
-            {icon}
-          </div>
-        ))}
+<div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+  {['🤖', '🌐', '🔔'].map(icon => (
+    <div
+      key={icon}
+      style={{
+        width: '32px', height: '32px',
+        borderRadius: '8px', cursor: 'pointer',
+        display: 'flex', alignItems: 'center',
+        justifyContent: 'center', fontSize: '15px',
+        transition: 'background 0.15s',
+      }}
+      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-glass-hover)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+    >
+      {icon}
+    </div>
+  ))}
 
-        {/* Clock */}
-        <div style={{
-          textAlign: 'right', paddingLeft: '8px',
-          borderLeft: '1px solid var(--border)',
-        }}>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-            {time}
-          </div>
-          <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
-            {date}
-          </div>
-        </div>
-      </div>
+  {/* User info + logout */}
+  <div style={{
+    display: 'flex', alignItems: 'center', gap: '8px',
+    padding: '4px 10px',
+    background: 'rgba(255,255,255,0.04)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: '8px',
+    cursor: 'pointer',
+  }}>
+    <div style={{
+      width: '22px', height: '22px',
+      borderRadius: '50%',
+      background: 'linear-gradient(135deg, #00ff88, #3b82f6)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: '11px', fontWeight: 700, color: '#060810',
+      flexShrink: 0,
+    }}>
+      {user?.name?.charAt(0).toUpperCase() || 'U'}
+    </div>
+    <span style={{ fontSize: '12px', color: '#8b949e', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      {user?.name?.split(' ')[0] || 'User'}
+    </span>
+  </div>
+
+  {/* Logout button */}
+  <div
+    onClick={logout}
+    title="Logout"
+    onMouseEnter={e => {
+      e.currentTarget.style.background = 'rgba(239,68,68,0.15)'
+      e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'
+    }}
+    onMouseLeave={e => {
+      e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
+      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+    }}
+    style={{
+      width: '32px', height: '32px',
+      borderRadius: '8px', cursor: 'pointer',
+      display: 'flex', alignItems: 'center',
+      justifyContent: 'center', fontSize: '15px',
+      background: 'rgba(255,255,255,0.04)',
+      border: '1px solid rgba(255,255,255,0.08)',
+      transition: 'all 0.15s',
+    }}
+  >
+    🚪
+  </div>
+
+  {/* Divider */}
+  <div style={{ width: '1px', height: '28px', background: 'var(--border-bright)' }} />
+
+  {/* Clock */}
+  <div style={{
+    textAlign: 'right',
+    paddingLeft: '8px',
+    borderLeft: '1px solid var(--border)',
+  }}>
+    <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+      {time}
+    </div>
+    <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+      {date}
+    </div>
+  </div>
+</div>
     </div>
   )
 }

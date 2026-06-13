@@ -8,7 +8,7 @@ interface FileItem {
   modified: string
 }
 
-const API = 'http://localhost:3001'
+const API = ''
 const ROOT = 'C:\\Users\\Shaik.salmaan'
 
 function formatSize(bytes: number): string {

@@ -26,7 +26,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   logout: () => {
-    localStorage.removeItem('beast_token')
-    set({ user: null, token: null, isAuthenticated: false })
+  localStorage.removeItem('beast_token')
+  set({ user: null, token: null, isAuthenticated: false })
+  // Reload page to clear all OS state
+  window.location.reload()
   }
 }))
